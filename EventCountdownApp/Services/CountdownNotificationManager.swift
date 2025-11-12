@@ -1,8 +1,11 @@
 import Foundation
 import UserNotifications
 
+/// Wraps UNUserNotificationCenter coordination for countdown reminders.
 final class CountdownNotificationManager {
     private let center = UNUserNotificationCenter.current()
+    
+    /// Ensures we only prompt for notifications once and return the current status via closure.
     func requestAuthorizationIfNeeded(completion: @escaping (Bool) -> Void) {
         fetchAuthorizationStatus { [weak self] status in
             guard let self = self else { return }
@@ -22,6 +25,7 @@ final class CountdownNotificationManager {
         }
     }
     
+    /// Aligns pending notifications with the in-memory events array.
     func syncNotifications(for events: [CountdownEvent]) {
         let identifiers = events.map { $0.id.uuidString }
         
@@ -40,6 +44,7 @@ final class CountdownNotificationManager {
         }
     }
     
+    /// Creates or refreshes one notification per countdown (if the date is still in the future).
     func scheduleNotification(for event: CountdownEvent) {
         guard event.date > Date() else {
             removeNotification(for: event.id)
@@ -63,6 +68,7 @@ final class CountdownNotificationManager {
         center.add(request, withCompletionHandler: nil)
     }
     
+    /// Cancels a previously scheduled notification by identifier.
     func removeNotification(for id: UUID) {
         center.removePendingNotificationRequests(withIdentifiers: [id.uuidString])
     }

@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Sheet used for both creating and editing countdown events.
 struct AddEventView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
@@ -9,6 +10,7 @@ struct AddEventView: View {
     let existingEvent: CountdownEvent?
     let onSave: (CountdownEvent) -> Void
     
+    /// Curated emoji palette so users can quickly personalize events.
     private let emojis = [
         "🎉", "🎂", "✈️", "🎓", "💍", "🏖️", "🎄", "🎃", "❤️", "🎁", "🏆", "🎭", "🎸",
         "🏠", "👶", "📅", "🚢", "🎊", "🌟", "⚽️", "🎮", "🍕", "🌴", "⛰️", "🏋️", "🎬",
@@ -62,6 +64,7 @@ struct AddEventView: View {
         }
     }
     
+    /// Presents a scrollable gallery of emojis to choose from.
     private var emojiPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Emoji")
@@ -88,6 +91,7 @@ struct AddEventView: View {
         }
     }
     
+    /// Text field for naming or renaming the countdown.
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Event Name")
@@ -100,6 +104,7 @@ struct AddEventView: View {
         }
     }
     
+    /// Graphical picker so users can target an exact day/time.
     private var datePicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Date & Time")

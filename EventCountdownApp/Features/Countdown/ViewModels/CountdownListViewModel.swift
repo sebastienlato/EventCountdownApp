@@ -4,11 +4,15 @@ import EventKit
 import AudioToolbox
 import UIKit
 
+/// Source of truth for countdown events, handling persistence, notifications, and calendar sync.
 @MainActor
 final class CountdownListViewModel: ObservableObject {
+    /// Published events list consumed by the UI.
     @Published private(set) var events: [CountdownEvent] = []
+    /// Non-nil when an event just completed so we can drive celebratory alerts.
     @Published var celebrationEvent: CountdownEvent?
     
+    /// Tracks IDs we have already celebrated to avoid duplicate haptics/alerts.
     private var completedEvents: Set<UUID> = []
     private let eventsKey = "events"
     private let completedEventsKey = "completedEvents"
@@ -16,6 +20,9 @@ final class CountdownListViewModel: ObservableObject {
     private let notificationManager = CountdownNotificationManager()
     private var notificationAuthorizationGranted = false
     
+    // MARK: - Lifecycle
+    
+    /// Loads persisted data and optionally syncs notifications to keep schedules fresh.
     func loadData() {
         loadEvents()
         loadCompletedEvents()
@@ -25,6 +32,7 @@ final class CountdownListViewModel: ObservableObject {
         }
     }
     
+    /// Requests notification permissions the first time and primes scheduled alerts.
     func prepareNotifications() {
         notificationManager.requestAuthorizationIfNeeded { [weak self] granted in
             guard let self = self else { return }
@@ -36,6 +44,9 @@ final class CountdownListViewModel: ObservableObject {
         }
     }
     
+    // MARK: - CRUD
+    
+    /// Inserts a new event or updates an existing one, then syncs persistence + notifications.
     func upsert(_ event: CountdownEvent) {
         if let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index] = event
@@ -46,6 +57,7 @@ final class CountdownListViewModel: ObservableObject {
         notificationManager.scheduleNotification(for: event)
     }
     
+    /// Removes an event everywhere and clears any completion bookkeeping.
     func delete(_ event: CountdownEvent) {
         events.removeAll { $0.id == event.id }
         completedEvents.remove(event.id)
@@ -54,6 +66,7 @@ final class CountdownListViewModel: ObservableObject {
         notificationManager.removeNotification(for: event.id)
     }
     
+    /// Checks for events that crossed their deadline since the previous tick and celebrates once.
     func checkForCompletedEvents(previousDate: Date, currentDate: Date) {
         for event in events where !completedEvents.contains(event.id) {
             if previousDate < event.date && currentDate >= event.date {
@@ -65,6 +78,7 @@ final class CountdownListViewModel: ObservableObject {
         }
     }
     
+    /// Pulls upcoming calendar items (with permission) and seeds them as countdowns.
     func syncWithCalendar() {
         eventStore.requestFullAccessToEvents { [weak self] granted, error in
             guard let self = self, error == nil, granted else { return }
@@ -73,6 +87,8 @@ final class CountdownListViewModel: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Persistence
     
     private func loadEvents() {
         guard let data = UserDefaults.standard.data(forKey: eventsKey),
@@ -101,6 +117,8 @@ final class CountdownListViewModel: ObservableObject {
         guard let encoded = try? JSONEncoder().encode(completedEvents) else { return }
         UserDefaults.standard.set(encoded, forKey: completedEventsKey)
     }
+    
+    // MARK: - Calendar import
     
     private func importCalendarEvents() {
         let calendars = eventStore.calendars(for: .event)
@@ -133,6 +151,8 @@ final class CountdownListViewModel: ObservableObject {
         let day = Calendar.current.startOfDay(for: date).timeIntervalSinceReferenceDate
         return "\(title)#\(day)"
     }
+    
+    // MARK: - Celebrations
     
     private func triggerCelebration(for event: CountdownEvent) {
         let generator = UINotificationFeedbackGenerator()

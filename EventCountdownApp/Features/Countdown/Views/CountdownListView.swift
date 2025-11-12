@@ -1,12 +1,14 @@
 import Combine
 import SwiftUI
 
+/// The primary screen that lists countdowns, handles creation, and reacts to time updates.
 struct CountdownListView: View {
     @StateObject private var viewModel = CountdownListViewModel()
     @State private var showingAddEvent = false
     @State private var editingEvent: CountdownEvent?
     @State private var currentDate = Date()
     
+    /// One-second ticker that keeps the UI and completion detection in sync.
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -78,6 +80,7 @@ struct CountdownListView: View {
         }
     }
     
+    /// Gentle placeholder that nudges the user to add their first countdown.
     private var emptyState: some View {
         VStack(spacing: 20) {
             Image(systemName: "hourglass")

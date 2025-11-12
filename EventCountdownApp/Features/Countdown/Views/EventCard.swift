@@ -1,11 +1,13 @@
 import SwiftUI
 
+/// Card summarizing how much time remains for a specific countdown event.
 struct EventCard: View {
     let event: CountdownEvent
     let currentDate: Date
     let onEdit: () -> Void
     let onDelete: () -> Void
     
+    /// Breaks down the delta between now and the target date into readable units.
     private var timeRemaining: (isPast: Bool, days: Int, hours: Int, minutes: Int, seconds: Int) {
         let components = Calendar.current.dateComponents([.day, .hour, .minute, .second], from: currentDate, to: event.date)
         let isPast = event.date < currentDate
@@ -66,6 +68,7 @@ struct EventCard: View {
     }
 }
 
+/// Tiny helper view that renders a number stacked over its label.
 struct TimeUnit: View {
     let value: Int
     let unit: String
